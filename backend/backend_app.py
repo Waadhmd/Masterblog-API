@@ -37,6 +37,16 @@ def handle_posts():
 
     return jsonify(POSTS)
 
+@app.route('/api/posts/<int:post_id>' , methods=['DELETE'])
+def delete_post(post_id):
+    # Find the post by ID
+    post_to_delete = next((post for post in POSTS if post['id'] == post_id), None)
+    if post_to_delete:
+        POSTS.remove(post_to_delete)
+        return jsonify({"message": f"Post with id {post_id} has been deleted successfully."}), 200
+
+    return jsonify({"message": "Requested post doesn't exist!"}), 404
+
 @app.errorhandler(400)
 def bad_request_error(error):
     return jsonify({'error':'bad request , missing some data'}),400
