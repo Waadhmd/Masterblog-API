@@ -9,6 +9,8 @@ POSTS = [
     {"id": 2, "title": "Second post", "content": "This is the second post."},
 ]
 
+def find_post_by_id(posts,post_id):
+     return next((post for post in posts if post['id'] == post_id), None)
 
 @app.route('/api/posts', methods=['GET','POST'])
 def handle_posts():
@@ -40,12 +42,47 @@ def handle_posts():
 @app.route('/api/posts/<int:post_id>' , methods=['DELETE'])
 def delete_post(post_id):
     # Find the post by ID
-    post_to_delete = next((post for post in POSTS if post['id'] == post_id), None)
+    post_to_delete = find_post_by_id(POSTS,post_id)
     if post_to_delete:
         POSTS.remove(post_to_delete)
         return jsonify({"message": f"Post with id {post_id} has been deleted successfully."}), 200
 
     return jsonify({"message": "Requested post doesn't exist!"}), 404
+
+@app.route('/api/posts/<int:post_id>', methods=['PUT'])
+def update_post(post_id):
+    post_to_update = find_post_by_id(POSTS,post_id)
+    if post_to_update:
+        data = request.get_json()
+        title = data.get('title')
+        content = data.get('content')
+
+        if title is not None and isinstance(title, str) and title.strip():
+          post_to_update['title'] = title.strip()
+        if content is not None and isinstance(content, str) and content.strip():
+          post_to_update['content'] = content.strip()
+
+        return jsonify({
+        "id": post_id,
+        "title": f"{post_to_update['title']}",
+        "content": f"{post_to_update['content']}"
+        }),200
+    return jsonify({"message": "Requested post doesn't exist!"}), 404
+
+@app.route('/api/posts/search',methods=['GET'])
+def handle_search():
+    title = request.args.get('title', '').strip()
+    content = request.args.get('content', '').strip()
+    if not title and not content:
+        return jsonify([]), 200
+
+    results = [
+        post for post in POSTS
+        if (title and title.lower() in post['title'].lower())
+        or (content and content.lower() in post['content'].lower())
+             ]
+    return jsonify(results),200
+
 
 @app.errorhandler(400)
 def bad_request_error(error):
