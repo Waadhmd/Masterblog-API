@@ -16,11 +16,13 @@ def find_post_by_id(posts,post_id):
 def handle_posts():
     if request.method == 'POST':
         data = request.get_json()
+        title = data.get('title') if data else None
+        content = data.get('content') if data else None
         # Validate required fields
         missing_fields = []
-        if not data or not data['title']:
+        if not title.strip():
             missing_fields.append("title")
-        if not data or not data['content']:
+        if not content.strip():
             missing_fields.append("content")
 
         if missing_fields:
@@ -37,7 +39,17 @@ def handle_posts():
         POSTS.append(new_post)
         return jsonify(new_post),201
 
-    return jsonify(POSTS)
+    sort = request.args.get('sort')
+    direction = request.args.get('direction','asc')
+    if (sort and sort not in ['title','content']) or (direction and direction not in ['asc','desc']):
+        return jsonify({'error':'invalid sort fields or direction'}),400
+    if sort in ['title','content']:
+        reverse = (direction == 'desc')
+        sorted_list = sorted(POSTS,key=lambda post:post[sort].lower(),reverse=reverse)
+        return jsonify(sorted_list),200
+
+    return jsonify(POSTS),200
+
 
 @app.route('/api/posts/<int:post_id>' , methods=['DELETE'])
 def delete_post(post_id):
