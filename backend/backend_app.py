@@ -38,17 +38,32 @@ def handle_posts():
         }
         POSTS.append(new_post)
         return jsonify(new_post),201
-
+    #GET request
     sort = request.args.get('sort')
     direction = request.args.get('direction','asc')
+
+    # Validate sort params
     if (sort and sort not in ['title','content']) or (direction and direction not in ['asc','desc']):
         return jsonify({'error':'invalid sort fields or direction'}),400
+    posts = POSTS[:]
+
+    # Apply sorting if needed
     if sort in ['title','content']:
         reverse = (direction == 'desc')
-        sorted_list = sorted(POSTS,key=lambda post:post[sort].lower(),reverse=reverse)
-        return jsonify(sorted_list),200
+        posts = sorted(posts,key=lambda post:post[sort].lower(),reverse=reverse)
 
-    return jsonify(POSTS),200
+    # Pagination
+    page = request.args.get('page',type=int)
+    limit = request.args.get('limit',type=int)
+    if page and limit:
+        if page < 1 and limit < 1:
+            return jsonify({'error':'page and limit must be positive integers'}),400
+        start_index = (page - 1) * limit
+        end_index = start_index + limit
+        posts = posts[start_index:end_index]
+
+
+    return jsonify(posts),200
 
 
 @app.route('/api/posts/<int:post_id>' , methods=['DELETE'])
