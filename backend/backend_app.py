@@ -15,6 +15,20 @@ def find_post_by_id(posts,post_id):
 
 @app.route('/api/posts', methods=['GET','POST'])
 def handle_posts():
+    """
+     GET /api/posts
+         - Returns all posts.
+         - Supports optional query parameters:
+             * sort: 'title' or 'content'
+             * direction: 'asc' or 'desc'
+             * page: integer page number
+             * limit: integer number of posts per page
+     POST /api/posts
+         - Creates a new post.
+         - Expects JSON body with 'title' and 'content'.
+         - Returns 201 Created with the created post.
+         - Returns 400 Bad Request if required fields are missing.
+     """
     if request.method == 'POST':
         data = request.get_json()
         title = data.get('title') if data else None
@@ -69,6 +83,12 @@ def handle_posts():
 
 @app.route('/api/posts/<int:post_id>' , methods=['DELETE'])
 def delete_post(post_id):
+    """
+    DELETE /api/posts/<post_id>
+        - Deletes a post by ID.
+        - Returns 200 OK with a success message if the post was deleted.
+        - Returns 404 Not Found if the post does not exist.
+    """
     # Find the post by ID
     post_to_delete = find_post_by_id(POSTS,post_id)
     if post_to_delete:
@@ -79,6 +99,13 @@ def delete_post(post_id):
 
 @app.route('/api/posts/<int:post_id>', methods=['PUT'])
 def update_post(post_id):
+    """
+    PUT /api/posts/<post_id>
+        - Updates a post by ID.
+        - Expects JSON body with optional 'title' and/or 'content'.
+        - Returns 200 OK with the updated post if successful.
+        - Returns 404 Not Found if the post does not exist.
+    """
     post_to_update = find_post_by_id(POSTS,post_id)
     if post_to_update:
         data = request.get_json()
@@ -99,6 +126,12 @@ def update_post(post_id):
 
 @app.route('/api/posts/search',methods=['GET'])
 def handle_search():
+    """
+    GET /api/posts/search
+        - Searches posts by 'title' and/or 'content' query parameters.
+        - Returns 200 OK with a list of posts matching the search terms.
+        - Returns an empty list if no posts match.
+    """
     title = request.args.get('title', '').strip()
     content = request.args.get('content', '').strip()
     if not title and not content:
